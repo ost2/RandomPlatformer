@@ -1,0 +1,15 @@
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/bin/Debug/net7.0/RandomPlatformer
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/bin/Debug/net7.0/RandomPlatformer.deps.json
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/bin/Debug/net7.0/RandomPlatformer.runtimeconfig.json
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/bin/Debug/net7.0/RandomPlatformer.dll
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/bin/Debug/net7.0/RandomPlatformer.pdb
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/obj/Debug/net7.0/RandomPlatformer.csproj.AssemblyReference.cache
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/obj/Debug/net7.0/RandomPlatformer.GeneratedMSBuildEditorConfig.editorconfig
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/obj/Debug/net7.0/RandomPlatformer.AssemblyInfoInputs.cache
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/obj/Debug/net7.0/RandomPlatformer.AssemblyInfo.cs
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/obj/Debug/net7.0/RandomPlatformer.csproj.CoreCompileInputs.cache
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/obj/Debug/net7.0/RandomPlatformer.dll
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/obj/Debug/net7.0/refint/RandomPlatformer.dll
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/obj/Debug/net7.0/RandomPlatformer.pdb
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/obj/Debug/net7.0/RandomPlatformer.genruntimeconfig.cache
+/Users/sigurdsevaldrud/Projects/RandomPlatformer/RandomPlatformer/obj/Debug/net7.0/ref/RandomPlatformer.dll
