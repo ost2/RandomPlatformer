@@ -72,15 +72,25 @@ namespace RandomPlatformer
                 {
                     AllLines[h][i] = symbol;
                 }
-
             }
         }
 
-        public void addVerticalLine(int w, char symbol)
+        public void addVerticalLine(int w, char symbol, int shortenBy = 0, char bottom = ' ', char top = ' ')
         {
-            for (int i = 0; i < Height; i++)
+            for (int i = shortenBy; i < Height - shortenBy; i++)
             {
-                AllLines[i][w] = symbol;
+                if (i == shortenBy)
+                {
+                    AllLines[i][w] = bottom;
+                }
+                else if (i == Height - shortenBy - 1)
+                {
+                    AllLines[i][w] = top;
+                }
+                else
+                {
+                    AllLines[i][w] = symbol;
+                }
             }
         }
 
@@ -94,9 +104,33 @@ namespace RandomPlatformer
                 }
             }
         }
+        void setWallColors()
+        {
+            for (int i = 0; i < Height; i++)
+            {
+                platColors.Add(new List<ConsoleColor>(new ConsoleColor[Width]));
+            }
+            for (int i = 0; i < Height; i++)
+            {
+                for (int j = 0; j < Width; j++)
+                {
+                    platColors[i][j] = ConsoleColor.DarkMagenta;
+                }
+                
+            }
+            foreach (GameObject wall in App.WallObjects)
+            {
+                platColors[wall.yPos][wall.xPos] = wall.ObjectColor;
+            }
+        }
 
+        List<List<ConsoleColor>> platColors = new List<List<ConsoleColor>>();
         public void printFrame(int ms, ConsoleColor drawColor = ConsoleColor.White, int colorH = 0, bool clearFrame = true)
         {
+            if (platColors.Count == 0)
+            {
+                setWallColors();
+            }
             if (clearFrame)
             {
                 Console.Clear();
@@ -108,20 +142,28 @@ namespace RandomPlatformer
             {
                 for (int j = 0; j < Width; j++)
                 {
-                    foreach (GameObject wall in App.WallObjects)
-                    {
-                        if (wall.yPos == i && wall.xPos == j)
-                        {
-                            Console.ForegroundColor = wall.ObjectColor;
-                            //Console.BackgroundColor = gameObject.ObjectColor;
-                        }
-                    }
-                    foreach (GameObject gameObject in App.GameObjects)
+                    Console.ForegroundColor = platColors[i][j];
+                    foreach (var gameObject in App.GameObjects)
                     {
                         if (gameObject.yPos == i && gameObject.xPos == j)
                         {
                             Console.ForegroundColor = gameObject.ObjectColor;
-                            //Console.BackgroundColor = gameObject.ObjectColor;
+                        }
+                    }
+                    foreach (var col in App.CollectableObjects)
+                    {
+                        if (col.yPos == i && col.xPos == j)
+                        {
+                            Console.ForegroundColor = col.ObjectColor;
+                        }
+                    }
+                    if (App.IsPaused)
+                    {
+                        Console.ForegroundColor = ConsoleColor.DarkGray;
+                        foreach (var pos in App.PauseTextPixels)
+                        {
+                            if (pos[0] == i && pos[1] == j)
+                            { Console.ForegroundColor = App.PauseColor; }
                         }
                     }
                     Console.Write(AllLines[i][j]);
@@ -133,19 +175,22 @@ namespace RandomPlatformer
             Thread.Sleep(ms);
         }
 
-        public void addSymbolImage(SymbolImage image, int h, int w)
+        public List<List<int>> addSymbolImage(SymbolImage image, int h, int w)
         {
+            var pixels = new List<List<int>>();
             int i = h;
             foreach (string s in image.FullImage)
             {
                 int j = w;
                 foreach (char c in s)
                 {
+                    pixels.Add(new List<int> { i, j });
                     addPixel(i, j, c);
                     j++;
                 }
                 i++;
             }
+            return pixels;
         }
     }
 }

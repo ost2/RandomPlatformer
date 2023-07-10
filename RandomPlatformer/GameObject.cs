@@ -20,11 +20,14 @@ namespace RandomPlatformer
         public bool AvoidsNearest { get; set; }
         public bool FollowsNearest { get; set; }
         public bool IsInfectious { get; set; }
+        public bool IsCollectable { get; set; }
 
         public bool IsInAir { get; set; }
         public int JumpTimer { get; set; } = 0;
 
         public ConsoleColor ObjectColor { get; set; }
+
+        Random rand = new Random();
 
         public GameObject(Application app, char symbol, int movementSpeed = 1, ConsoleColor objColor = ConsoleColor.White, bool isSolid = true, bool isHostile = false, bool followsPlayer = false, bool avoidsNearest = false, bool followsNearest = false, bool isInfectious = false)
         {
@@ -39,6 +42,7 @@ namespace RandomPlatformer
             AvoidsNearest = avoidsNearest;
             FollowsNearest = followsNearest;
             IsInfectious = isInfectious;
+            IsCollectable = false;
         }
 
         public GameObject(GameObject gameObject, int y, int x, List<char> randomSymbolsOverride = null, ConsoleColor colorOverride = ConsoleColor.Black)
@@ -53,7 +57,7 @@ namespace RandomPlatformer
             }
             else
             {
-                Symbol = randomSymbolsOverride[App.Rand.Next(0, randomSymbolsOverride.Count)];
+                Symbol = randomSymbolsOverride[rand.Next(0, randomSymbolsOverride.Count)];
             }
 
             ObjectColor = gameObject.ObjectColor;
@@ -78,22 +82,20 @@ namespace RandomPlatformer
             //yPos = Math.Clamp(yPos, 1, App.ScreenHeight - 1);
             //xPos = Math.Clamp(xPos, 1, App.ScreenWidth - 1);
         }
+        
+
 
         public void doCollision(GameObject Mover, GameObject Stander)
         {
-            if (Stander.IsSolid)
-            {
-                Mover.setMovementAwayFromObject(Stander);
-                Stander.setMovementAwayFromObject(Mover);
-  
-                //Mover.yMovement = 0;
-                //Mover.xMovement = 0;
-            }
             if (Mover.IsHostile || Stander.IsHostile)
             {
+                if (Mover.IsHostile && Stander.IsHostile)
+                {
+                    Mover.setMovementAwayFromObject(Stander);
+                }
                 if (Stander == App.PlayerChar || Mover == App.PlayerChar)
                 {
-                    App.playerLose();
+                    App.PlayerDead = true;
                 }
             }
             if (Mover.IsInfectious && Stander != App.PlayerChar && !Stander.IsInfectious)
@@ -152,18 +154,36 @@ namespace RandomPlatformer
             if (IsSolid)
             {
                 foreach (var wall in App.WallObjects)
-                {
-                    if (wall.yPos == nextYPos && wall.xPos == nextXPos)
+                {                   
                     {
-                        doCollisionWall(wall);
+                        if (wall.yPos == nextYPos && wall.xPos == nextXPos)
+                        {
+                            doCollisionWall(wall);
+                        }
                     }
                 }
             }
+            if (this == App.PlayerChar)
+            {
+                foreach (var col in App.CollectableObjects)
+                {
+                    if (col.yPos == nextYPos && col.xPos == nextXPos)
+                    {
+                        doCollosionCollect();
+                    }
+                }
+            }
+
+
         }
         public bool isOnGround()
         {
-            if (App.GameBoard.AllLines[yPos + 1][xPos] != ' ') { return true; }
+            if (App.isSolidGround(yPos + 1, xPos)) { return true; }
             return false;
+        }
+        void doCollosionCollect()
+        {
+            App.collectPoint();
         }
 
         public void doCollisionWall(GameObject wall)
@@ -179,7 +199,12 @@ namespace RandomPlatformer
                 return;
             }
             yMovement = 0;
-            xMovement = 0;
+            if (wall.yPos + 1 != yPos)
+            {
+                xMovement = 0;
+            }
+            
+
         }
 
         public void OOBCheck()
@@ -187,15 +212,28 @@ namespace RandomPlatformer
             int newYPos = yPos + yMovement;
             int newXPos = xPos + xMovement;
 
-            if (newYPos < 0 || newYPos >= App.ScreenHeight || newXPos < 0 || newXPos >= App.ScreenWidth)
+            if (newYPos < 3 || newYPos >= App.ScreenHeight)
             {
                 
                 //scoobyDoo(newYPos, newXPos);
                 //reverseMovement();
-                nullifyMovement();
+                nullifyMovement('y');
                 //teleportRandom();
                 //teleportToMiddle();
             }
+            if (newXPos < 1 || newXPos >= App.ScreenWidth - 1)
+            {
+                nullifyMovement('x');
+            }
+            if (newYPos >= App.ScreenHeight - 3)
+            {
+                App.PlayerChar.HasSuperJump = true;
+            }
+        }
+        public void nullifyMovement(char yOrX)
+        {
+            if (yOrX == 'y') { yMovement = 0; }
+            if (yOrX == 'x') { xMovement = 0; }
         }
 
         public void scoobyDoo(int y, int x)
@@ -223,16 +261,12 @@ namespace RandomPlatformer
             yMovement = -yMovement;
             xMovement = -xMovement;
         }
-        public void nullifyMovement()
-        {
-            yMovement = 0;
-            xMovement = 0;
-        }
+        
 
         public void teleportRandom()
         {
-            yPos = App.Rand.Next(0, App.ScreenHeight - 1);
-            xPos = App.Rand.Next(0, App.ScreenWidth - 1);
+            yPos = rand.Next(0, App.ScreenHeight - 1);
+            xPos = rand.Next(0, App.ScreenWidth - 1);
         }
 
         public void teleportToMiddle()
@@ -240,10 +274,16 @@ namespace RandomPlatformer
             yPos = App.ScreenHeight / 2;
             xPos = App.ScreenWidth / 2;
         }
+        public bool HasSuperJump { get; set; } = false;
 
         public void performJump()
         {
             JumpTimer = JumpHeight;
+            if (HasSuperJump)
+            {
+                JumpTimer += 8;
+                HasSuperJump = false;
+            }
             setObjectMovement(-1, xMovement);
         }
 
@@ -381,7 +421,7 @@ namespace RandomPlatformer
                     return nearestToFurthestArr[i];
                 }
             }
-            return App.GameObjects[App.Rand.Next(0, App.GameObjects.Count)];
+            return App.GameObjects[rand.Next(0, App.GameObjects.Count)];
         }
 
         public GameObject nearestNotRunner()
@@ -394,7 +434,7 @@ namespace RandomPlatformer
                     return nearestToFurthestArr[i];
                 }
             }
-            return App.GameObjects[App.Rand.Next(0, App.GameObjects.Count)];
+            return App.GameObjects[rand.Next(0, App.GameObjects.Count)];
         }
 
         public void setObjectMovement(int yMove, int xMove)
