@@ -93,9 +93,19 @@ namespace RandomPlatformer
                 {
                     Mover.setMovementAwayFromObject(Stander);
                 }
-                if (Stander == App.PlayerChar || Mover == App.PlayerChar)
+                if (Stander == App.PlayerChar)
                 {
+                    App.KillerPos = new int[2];
                     App.PlayerDead = true;
+                    App.KillerPos[0] = Mover.yPos; App.KillerPos[1] = Mover.xPos;
+                    Mover.MovementSpeed = 0;
+                }
+                if (Mover == App.PlayerChar)
+                {
+                    App.KillerPos = new int[2];
+                    App.PlayerDead = true;
+                    App.KillerPos[0] = Stander.yPos; App.KillerPos[1] = Stander.xPos;
+                    Stander.MovementSpeed = 0;
                 }
             }
             if (Mover.IsInfectious && Stander != App.PlayerChar && !Stander.IsInfectious)
@@ -227,7 +237,10 @@ namespace RandomPlatformer
             }
             if (newYPos >= App.ScreenHeight - 3)
             {
-                App.PlayerChar.HasSuperJump = true;
+                if (this == App.PlayerChar)
+                {
+                    App.PlayerChar.HasSuperJump = true;
+                }
             }
         }
         public void nullifyMovement(char yOrX)
@@ -311,14 +324,14 @@ namespace RandomPlatformer
             {
                 xMove = -MovementSpeed;
             }
-            if (Math.Abs(dy) > Math.Abs(dx) * 1.5)
-            {
-                xMove = 0;
-            }
-            else if (Math.Abs(dx) > Math.Abs(dy) * 1.5)
-            {
-                yMove = 0;
-            }
+            //if (Math.Abs(dy) > Math.Abs(dx) * 1.5)
+            //{
+            //    xMove = 0;
+            //}
+            //else if (Math.Abs(dx) > Math.Abs(dy) * 1.5)
+            //{
+            //    yMove = 0;
+            //}
             setObjectMovement(yMove, xMove);
         }
 

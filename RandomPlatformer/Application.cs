@@ -61,9 +61,10 @@ namespace RandomPlatformer
         {
             createLevel();
             LastRefresh = DateTime.Now;
+            KillerPos = new int[2] { 0, 0 };
             if (HasPlayer)
             {
-                PlayerChar = new GameObject(this, '0');
+                PlayerChar = new GameObject(this, '∆');
                 PlayerChar.ObjectColor = ConsoleColor.DarkCyan;
                 PlayerChar.yPos = ScreenHeight - 5;
                 PlayerChar.xPos = ScreenWidth / 2;
@@ -85,10 +86,7 @@ namespace RandomPlatformer
                 parseInput();
                 if ((DateTime.Now - LastRefresh).TotalMilliseconds >= RefreshRate && !IsPaused)
                 {
-                    if (PlayerDead)
-                    {
-                        playerLose();
-                    }
+                   
                     LastRefresh = DateTime.Now;
                     GameTimer += (new TimeSpan(0, 0, 0, 0, RefreshRate));
 
@@ -99,35 +97,44 @@ namespace RandomPlatformer
                     updatePlayerPosition();
                     generateFrame();
                     drawFrame();
-                   
+
+                    if (WinConditionMet)
+                    {
+                        playerWin();
+                    }
+                    if (PlayerDead)
+                    {
+                        playerLose();
+                    }
                 }
-                
-                
+
+
             }
         }
 
         public int CollectableNumber { get; set; }
         public int LastCollectedNumber { get; set; } = 1;
-        public int ColAnimTimer { get; set; } = 0;
+        public int FlickerTimer { get; set; } = 0;
         public int TotalCollected { get; set; } = 0;
 
         public char CollectableSymbol { get; set; }
         public ConsoleColor CollectableColor { get; set; }
         public List<GameObject> CollectableObjects { get; set; } = new List<GameObject>();
-        
-        public int WinCondition { get { return 6 + (LevelNumber * 2); } } 
-        public bool WinConditionMet { get { if (TotalCollected >= WinCondition) { return true; } else return false;  } }
+
+        public int WinCondition { get { return 6 + (LevelNumber * 2); } }
+        public bool WinConditionMet { get { if (TotalCollected >= WinCondition) { return true; } else return false; } }
+        public bool MatchPoint { get { if (TotalCollected == WinCondition - 1) return true; else return false; } }
         void handleCollectables()
         {
-            if (WinConditionMet)
-            {
-                playerWin();
-            }
             if (TotalEnemies / 3 > CollectableNumber)
             {
                 CollectableNumber++;
             }
-            handleCollectionAnimation();
+            if (MatchPoint)
+            {
+                CollectableNumber = 1;
+            }
+            handleFlickerAnimations();
             if (LastCollectedNumber > 0)
             {
                 clearCollectables();
@@ -200,29 +207,68 @@ namespace RandomPlatformer
             TotalCollected++;
             PlayerChar.HasSuperJump = true;
         }
-        void handleCollectionAnimation()
+        void handleFlickerAnimations()
         {
-            if (ColAnimTimer == 0 || ColAnimTimer == 1)
+            if (FlickerTimer == 0 || FlickerTimer == 1)
             {
-                ColAnimTimer++;
-                CollectableSymbol = '*';
-                CollectableColor = ConsoleColor.Green;
+                FlickerTimer++;
+
+                if (MatchPoint)
+                {
+                    CollectableSymbol = '◊';
+                    CollectableColor = ConsoleColor.Green;
+                }
+                else
+                {
+                    CollectableSymbol = '•';
+                    CollectableColor = ConsoleColor.Green;
+                }
 
                 PlayerChar.ObjectColor = ConsoleColor.DarkCyan;
-                if (PlayerChar.HasSuperJump) { PlayerChar.ObjectColor = ConsoleColor.Cyan; }
+                if (PlayerChar.HasSuperJump)
+                {
+                    PlayerChar.ObjectColor = ConsoleColor.Cyan;
+                }
+                foreach (var obj in GameObjects)
+                {
+                    if (obj.IsHostile)
+                    {
+                        obj.Symbol = '+';
+                    }
+                }
             }
-            else if (ColAnimTimer == 2 || ColAnimTimer == 3)
+            else if (FlickerTimer == 2 || FlickerTimer == 3)
             {
-                ColAnimTimer++;
-                if (ColAnimTimer == 4)
-                ColAnimTimer = 0;
-                CollectableSymbol = '+';
-                CollectableColor = ConsoleColor.DarkGreen;
+                FlickerTimer++;
+                if (FlickerTimer == 4)
+                { FlickerTimer = 0; }
 
-                if (PlayerChar.HasSuperJump) { PlayerChar.ObjectColor = ConsoleColor.Magenta; }
+                if (MatchPoint)
+                {
+                    CollectableColor = ConsoleColor.DarkGreen;
+                }
+                else
+                {
+                    CollectableColor = ConsoleColor.DarkGreen;
+                    CollectableSymbol = '°';
+                }
+
+                if (PlayerChar.HasSuperJump)
+                {
+                    PlayerChar.ObjectColor = ConsoleColor.Magenta;
+                }
+                foreach (var obj in GameObjects)
+                {
+                    if (obj.IsHostile)
+                    {
+                        obj.Symbol = '*';
+                    }
+                }
             }
+
             foreach (var col in CollectableObjects)
             {
+
                 col.Symbol = CollectableSymbol;
                 col.ObjectColor = CollectableColor;
             }
@@ -252,7 +298,7 @@ namespace RandomPlatformer
                 int x = 0;
                 while (y == 0 || x == 0)
                 {
-                    var pY = rand.Next(2, ScreenHeight - 2);
+                    var pY = rand.Next(3, ScreenHeight - 2);
                     var pX = rand.Next(2, ScreenWidth - 2);
 
                     if (Math.Abs(pY - PlayerChar.yPos) > 15) { y = pY; }
@@ -333,7 +379,20 @@ namespace RandomPlatformer
                         resetGame(false);
                         break;
                     case ConsoleKey.P:
+                    case ConsoleKey.Enter:
+                    case ConsoleKey.E:
                         pauseGame();
+                        break;
+                    case ConsoleKey.L:
+                        if (!IsPaused)
+                        PlayerDead = true;
+                        break;
+                    case ConsoleKey.O:
+                        if (!IsPaused)
+                        TotalCollected = WinCondition;
+                        break;
+                    case ConsoleKey.B:
+                        PlayLevelBuildAnimation = !PlayLevelBuildAnimation;
                         break;
                     default:
                         break;
@@ -397,7 +456,7 @@ namespace RandomPlatformer
             PlayerChar.OOBCheck();
             PlayerChar.moveObject(PlayerChar.yMovement, PlayerChar.xMovement);
         }
-             
+
         public void updateEnemyPositions()
         {
             {
@@ -416,42 +475,68 @@ namespace RandomPlatformer
 
         public void playerWin()
         {
-            Console.Clear();
-            Writer.output("*±{Å YOU  WIN Å}±*", 1, 0, symCol, textCol, symCol);
-            Writer.output("", 1);
-            displayStats();
-            Writer.output("‹«Å Spacebar to Continue Å»›", 1, 0, symCol, textCol, symCol);
-            Console.WriteLine();
-            waitForKey(ConsoleKey.Spacebar);
+            waitForKey(ConsoleKey.Enter, ConsoleKey.E);
             resetGame(true);
         }
 
         public bool PlayerDead { get; set; }
+        public int[] KillerPos { get; set; }
         public void playerLose()
         {
-            Console.Clear();
-            Writer.output(".:[Å -YOU DIED- Å]:.", 1, 0, symCol, textCol, symCol);
-            Writer.output("", 1);
-            displayStats();
-            Writer.output("‹«Å Spacebar to Retry Å»›", 1, 0, symCol, textCol, symCol);
-            Console.WriteLine();
-            waitForKey(ConsoleKey.Spacebar);
+            waitForKey(ConsoleKey.Enter, ConsoleKey.E);
             resetGame(false);
         }
 
-        void waitForKey(ConsoleKey key)
+        public bool IsIntro { get; set; } = false;
+        string[] getTopBotText()
         {
+            var text = new string[2];
+            text[1] = "    ‹« Enter to Continue »›";
+            if (PlayerDead)
+            {
+                text[0] = "      .:[ -YOU  DIED- ]:.";
+            }
+            else if (WinConditionMet)
+            {
+                text[0] = "      *±{ ~YOU * WIN~ }±*";
+            }
+            else if (IsPaused)
+            {
+                text[0] = "      ~≈{ • RESPITE • }≈~";    
+            }
+            else if (IsIntro)
+            {
+                text[0] = "                         ";
+                text[1] = "                         ";
+            }
+
+            return text;
+        }
+
+        void waitForKey(ConsoleKey key, ConsoleKey key2 = ConsoleKey.NoName)
+        {
+            ConsoleKey keyOpt;
+            if (key2 == ConsoleKey.NoName)
+            {
+                keyOpt = key;
+            }
+            else
+            {
+                keyOpt = key2;
+            }
             var pressed = false;
             while (!pressed)
             {
-                if (Console.ReadKey().Key == key) { pressed = true; }
-                Console.WriteLine();
+                var read = Console.ReadKey().Key;
+                if (read == key || read == keyOpt) { pressed = true; }
             }
         }
-       
+
 
         void resetGame(bool win)
         {
+            SymCol = ConsoleColor.Magenta;
+            TextCol = ConsoleColor.Yellow;
             TotalCollected = 0;
             LastCollectedNumber = 1;
             GameObjects.Clear();
@@ -479,10 +564,10 @@ namespace RandomPlatformer
             }
             runGame();
         }
-        public GameObject WallObj { get; set; } 
+        public GameObject WallObj { get; set; }
         public char PlatformChar { get; set; } = '‾';
         public char PlatformEdgeChar { get; set; } = 'T';
-        public char PlatformCenterChar { get; set; } = '˜';
+        public char PlatformCenterChar { get; set; } = '˘';
         void loadLevelLayout()
         {
             for (int i = 0; i < ScreenHeight; i++)
@@ -513,13 +598,70 @@ namespace RandomPlatformer
                 }
             }
         }
+
+        string[] getSpaces()
+        {
+            var spacesArr = new string[5];
+
+            var spaces0 = "";
+            var lvl = LevelNumber.ToString();
+            if (lvl.Length <= 1)
+            { spaces0 = " "; }
+            spacesArr[0] = spaces0;
+
+            var spaces1 = "";
+            var spaces2 = "";
+            var min = "" + GameTimer.Minutes;
+            var sec = "" + GameTimer.Seconds;
+            if (min.Length == 1)
+            {
+                spaces1 = " ";
+            }
+            if (sec.Length == 1)
+            {
+                spaces2 = " ";
+            }
+            spacesArr[1] = spaces1;
+            spacesArr[2] = spaces2;
+
+            var spaces3 = "";
+            var spaces4 = "";
+            var points = TotalCollected.ToString();
+            var req = WinCondition.ToString();
+            if (points.Length <= 1)
+            {
+                spaces3 = " ";
+            }
+            if (req.Length <= 1)
+            {
+                spaces4 = " ";
+            }
+            spacesArr[3] = spaces3;
+            spacesArr[4] = spaces4;
+            return spacesArr;
+        }
+
+
         public List<GameObject> CenterPoints { get; set; } = new List<GameObject>();
-        SymbolImage pausedText = new SymbolImage("  . ~ •• ~ . ; ~•.˙PAUSED˙.•~ ;  ˙ ~ •\\/• ~ ˙");
+        SymbolImage pausedText = new SymbolImage("    .~ •/\\• ~. ; ~•:˙[ PAUSED ]˙:•~ ;    ˙˚~ •\\/• ~˚˙");
         public List<List<int>> PauseTextPixels { get; set; }
+        public List<List<int>> StatsTextPixels { get; set; }
         public ConsoleColor PauseColor { get; set; } = ConsoleColor.Yellow;
+
         void drawPausedText()
         {
-            PauseTextPixels = GameBoard.addSymbolImage(pausedText, GameBoard.Height / 2, (GameBoard.Width / 2) - 5);
+            PauseTextPixels = GameBoard.addSymbolImage(pausedText, (GameBoard.Height / 2), (GameBoard.Width / 2) - 8);
+        }
+
+        public SymbolImage StatsImage { get; set; }
+        public void drawStatsText(bool intro = false)
+        {
+            var spaces = getSpaces();
+            var text = getTopBotText();
+            StatsImage = new SymbolImage("");
+            StatsImage.createImage(text[0] + " ;  ;  ;      . -~ • LVL: " + spaces[0] + + LevelNumber + " • ~- . ;  ; .~•/˙  Survived: " + spaces[1] + GameTimer.Minutes + "m " + spaces[2] + GameTimer.Seconds + "s  ˙\\•~. ;  ;  ˙~•\\.  Points: " + spaces[3] + spaces[4] + TotalCollected + " / " + WinCondition + "  ./•~˙  ;  ;          ˙ -~ •.• ~- ˙    ;  ;  ; " + text[1]);
+            if (!intro)
+            StatsTextPixels = GameBoard.addSymbolImage(StatsImage, (ScreenHeight / 2) - 5, (ScreenWidth / 2) - 15);
         }
         public void generateFrame()
         {
@@ -539,26 +681,33 @@ namespace RandomPlatformer
             GameBoard.addHorizontalLine(2, PlatformChar);
             GameBoard.addVerticalLine(ScreenWidth - 1, '│', 2, '§', '§');
             GameBoard.addVerticalLine(0, '│', 2, '§', '§');
-            if (IsPaused)
-            { drawPausedText(); }
+            if (PlayerDead || WinConditionMet || IsPaused)
+            { drawStatsText(); }
         }
 
-        ConsoleColor textCol = ConsoleColor.Yellow;
-        ConsoleColor symCol = ConsoleColor.Magenta;
+
+        public ConsoleColor TextCol { get; set; } = ConsoleColor.Yellow;
+        public ConsoleColor SymCol { get; set; } = ConsoleColor.Magenta;
+        public bool PlayLevelBuildAnimation { get; set; } = true;
+
         void displayStats()
         {
             
-            Writer.output(". -~ •Å LVL: " + LevelNumber + " Å• ~- .", 0, 0, symCol, textCol, symCol);
-            Writer.output(".~•/˙   ÅSurvived: " + GameTimer.Minutes + "m " + GameTimer.Seconds+ "sÅ   ˙\\•~.", 1, 0, symCol, textCol, symCol);
-            Writer.output("˙~•\\.  ÅPoints: " + TotalCollected + " / " + WinCondition + "Å  ./•~˙", 1, 0, symCol, textCol, symCol);
-            Writer.output("˙ -~ •.• ~- ˙", 1, 0, symCol);
+            Writer.output(". -~ •Å LVL: " + LevelNumber + " Å• ~- .", 0, 0, SymCol, TextCol, SymCol);
+            Writer.output(".~•/˙   ÅSurvived: " + GameTimer.Minutes + "m " + GameTimer.Seconds+ "sÅ   ˙\\•~.", 1, 0, SymCol, TextCol, SymCol);
+            Writer.output("˙~•\\.  ÅPoints: " + TotalCollected + " / " + WinCondition + "Å  ./•~˙", 1, 0, SymCol, TextCol, SymCol);
+            Writer.output("˙ -~ •.• ~- ˙", 1, 0, SymCol);
             Console.WriteLine();
+
         }
 
         public void drawFrame()
         {
             GameBoard.printFrame(0);
-            displayStats();
+            if (!PlayerDead && !WinConditionMet && !IsPaused)
+            {
+                displayStats();
+            }
         }
     }
 }

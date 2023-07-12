@@ -58,6 +58,10 @@ namespace RandomPlatformer
 				if (canPlace)
 				{
 					App.PlatformPositions.Add(level.addSymbolImage(platform, y, x));
+					if (App.PlayLevelBuildAnimation)
+					{
+                        level.printFrame(18, ConsoleColor.DarkGray);
+                    }
 					i++;
 				}
             }

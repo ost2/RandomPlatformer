@@ -138,33 +138,122 @@ namespace RandomPlatformer
 
             ConsoleColor color;
 
+            var pixelCount = 0;
             for (int i = 0; i < Height; i++)
             {
                 for (int j = 0; j < Width; j++)
                 {
                     Console.ForegroundColor = platColors[i][j];
-                    foreach (var gameObject in App.GameObjects)
+                    if (drawColor == ConsoleColor.White)
                     {
-                        if (gameObject.yPos == i && gameObject.xPos == j)
+                        foreach (var gameObject in App.GameObjects)
                         {
-                            Console.ForegroundColor = gameObject.ObjectColor;
+                            if (gameObject.yPos == i && gameObject.xPos == j)
+                            {
+                                Console.ForegroundColor = gameObject.ObjectColor;
+                            }
+                        }
+                        foreach (var col in App.CollectableObjects)
+                        {
+                            if (col.yPos == i && col.xPos == j)
+                            {
+                                Console.ForegroundColor = col.ObjectColor;
+                            }
+                        }
+                        if (App.PlayerDead || App.WinConditionMet || App.IsPaused || App.IsIntro)
+                        {
+                            Console.ForegroundColor = ConsoleColor.DarkGray;
+
+                            ConsoleColor topBottomInner = ConsoleColor.Red;
+                            ConsoleColor inner = ConsoleColor.Gray;
+                            ConsoleColor outer = ConsoleColor.DarkRed;
+                            if (App.WinConditionMet)
+                            {
+                                if (App.CollectableObjects[0].yPos == i && App.CollectableObjects[0].xPos == j)
+                                {
+                                    Console.ForegroundColor = App.CollectableObjects[0].ObjectColor;
+                                }
+                                topBottomInner = ConsoleColor.Blue;
+                                inner = ConsoleColor.White;
+                                outer = ConsoleColor.DarkBlue;
+                            }
+                            else if (App.IsPaused || App.IsIntro)
+                            {
+                                topBottomInner = ConsoleColor.Magenta;
+                                inner = ConsoleColor.White;
+                                outer = ConsoleColor.DarkMagenta;
+                                if (!App.IsIntro)
+                                {
+                                    if (App.PlayerChar.yPos == i && App.PlayerChar.xPos == j)
+                                    {
+                                        Console.ForegroundColor = App.PlayerChar.ObjectColor;
+                                    }
+                                }
+                            }
+                            if (App.PlayerDead)
+                            {
+                                if (App.KillerPos[0] == i && App.KillerPos[1] == j)
+                                {
+                                    Console.ForegroundColor = ConsoleColor.Red;
+                                }
+                            }
+                            foreach (var pos in App.StatsTextPixels)
+                            {
+                                if (pos[0] == i && pos[1] == j)
+                                {
+                                    pixelCount++;
+                                    if (pixelCount < 10)
+                                    {
+                                        Console.ForegroundColor = outer;
+                                    }
+                                    else if (pixelCount < 22)
+                                    {
+                                        Console.ForegroundColor = topBottomInner;
+                                    }
+                                    else if (pixelCount < 38)
+                                    {
+                                        Console.ForegroundColor = outer;
+                                    }
+                                    else if (pixelCount < 45)
+                                    {
+                                        Console.ForegroundColor = inner;
+                                    }
+                                    else if (pixelCount < 58)
+                                    {
+                                        Console.ForegroundColor = outer;
+                                    }
+                                    else if (pixelCount < 78)
+                                    {
+                                        Console.ForegroundColor = inner;
+                                    }
+                                    else if (pixelCount < 91)
+                                    {
+                                        Console.ForegroundColor = outer;
+                                    }
+                                    else if (pixelCount < 107)
+                                    {
+                                        Console.ForegroundColor = inner;
+                                    }
+
+                                    else if (pixelCount < 145)
+                                    {
+                                        Console.ForegroundColor = outer;
+                                    }
+                                    else if (pixelCount < 164)
+                                    {
+                                        Console.ForegroundColor = topBottomInner;
+                                    }
+                                    else
+                                    {
+                                        Console.ForegroundColor = outer;
+                                    }
+                                }
+                            }
                         }
                     }
-                    foreach (var col in App.CollectableObjects)
+                    else
                     {
-                        if (col.yPos == i && col.xPos == j)
-                        {
-                            Console.ForegroundColor = col.ObjectColor;
-                        }
-                    }
-                    if (App.IsPaused)
-                    {
-                        Console.ForegroundColor = ConsoleColor.DarkGray;
-                        foreach (var pos in App.PauseTextPixels)
-                        {
-                            if (pos[0] == i && pos[1] == j)
-                            { Console.ForegroundColor = App.PauseColor; }
-                        }
+                        Console.ForegroundColor = drawColor;
                     }
                     Console.Write(AllLines[i][j]);
                     Console.ResetColor();

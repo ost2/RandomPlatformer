@@ -6,7 +6,7 @@ namespace RandomPlatformer
 		List<string> _fullImage;
 		public List<string> FullImage { get { return _fullImage; } }
 
-		void createImage(string symbols)
+		public void createImage(string symbols)
 		{
 			_fullImage = new List<string>();
 			_fullImage = symbols.Split(" ; ").ToList();
